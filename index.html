@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html class="accueil" lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>hello.html</title>
+        <style type="text/css">
+            * {
+                padding: 0;
+                margin: 0;
+            }
+            body {
+                text-align: center;
+            }
+            ul {
+                list-style: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+            <h1>Todo</h1>
+            <elem></elem>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script type="text/javascript">
+
+            const apiUri = "http://localhost:3000/";
+
+            let elem = {
+                data: function(){
+                    return {
+                        value: '',
+                        todo: [],
+                        MaxA : null
+                    }
+                },
+                template: `
+                        <div>
+                            <ul>
+                                <li v-for="(td,index) in todo" :key="index"><input type="text" v-model="todo[index]['titre']" @keyup.enter="add"><button @click="del(index)">Del</button></li>
+                            </ul>
+                            <h3>Nombre d'item non vide</h3>
+                            nb task : {{ MaxB }} <br>
+                            <button type="button" @click="create">Add Todo</button><br>
+                            debug : {{ todo }}
+                        </div>`,
+                methods: {
+                    add() {
+                        this.todo.push({'id': (this.todo[this.todo.length - 1]['id'] + 1),'titre': ''});
+                    },
+                    del(index) {
+                        if(this.todo.length != 1) {
+                            this.todo.splice(index, 1);
+                        }
+                    },
+                    create() {
+                        fetch(apiUri + 'todo', {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        }).then((response) => response.json()).then((data) => {
+                            let id = data['id'];
+                            this.todo[this.todo.length - 1]['id'] = id;
+                            fetch(apiUri + 'todo/' + id, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json'
+                                },
+                                body : JSON.stringify(this.todo[this.todo.length - 1])
+                            });
+                            this.add();
+                        });
+                    }
+                },
+                computed: {
+                    MaxB() {
+                        return this.todo.length;
+                    },
+                },
+                watch: {
+                },
+                mounted() {
+                    fetch(apiUri + 'todo')
+                        .then((response) => response.json())
+                        .then((data) => {
+                            this.todo = data;
+                            this.todo.push({'id': (this.todo[this.todo.length - 1]['id'] + 1),'titre': ''});
+                        }
+                    );
+                }
+            };
+
+            let app = new Vue({
+                el: '#app',
+                components: {
+                    'elem' : elem
+                },
+            });
+
+        </script>
+    </body>
+</html>
